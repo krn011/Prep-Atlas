@@ -616,12 +616,18 @@ button.code-line:hover { background: #3e3d3a; }
   }
 }
 
+.brand { flex-direction: column; align-items: flex-start; gap: 2px; }
+.brand small { margin: 0 0 0 29px; }
+.brand-symbol { display: none; }
 .icon-rail, .icon-button.rail-toggle { display: none; }
 @media (min-width: 901px) {
   .icon-button.rail-toggle { display: inline-grid; place-items: center; }
   .compact { --sidebar-width: 68px; }
   .compact .sidebar { padding-inline: 10px; overflow: visible; }
-  .compact .brand { align-self: center; padding: 0; }
+  .top-bar { padding-inline-start: 9px; }
+  .compact .brand { align-self: center; justify-content: center; align-items: center; padding: 0; width: 42px; height: 42px; }
+  .compact .brand-lockup, .compact .brand small { display: none; }
+  .compact .brand-symbol { display: block; width: 16px; height: auto; }
   .compact .sidebar :is(.sidebar-nav,.topic-ruler,.sidebar-bottom), .compact .brand div { display: none; }
   .icon-rail { display: grid; gap: 4px; margin-top: 38px; }
   .rail-group { position: relative; padding-inline: 2px; }

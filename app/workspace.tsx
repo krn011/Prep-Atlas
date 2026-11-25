@@ -37,7 +37,12 @@ function href({ page, id }: View) {
 }
 
 function BrandMark() {
-  return <img src="/brand/mark.png" width="38" alt="" />;
+  return <>
+    <img className="brand-lockup" src="/brand/logo.png" width="139" alt="" />
+    <svg className="brand-symbol" width="16" height="23" viewBox="0 0 17 24" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M2 0h13a2 2 0 0 1 2 2v2.4h-4.4v2H17v3.1H9.8v2H17v3.1H7.4v2H17v6.6a.8.8 0 0 1-1.2.7l-7.3-4.2-7.3 4.2a.8.8 0 0 1-1.2-.7V2a2 2 0 0 1 2-2Z" />
+    </svg>
+  </>;
 }
 
 function ScopeArtwork() {
@@ -378,7 +383,7 @@ export default function Workspace({ chapters }: { chapters: Chapter[] }) {
   return <div className={`app-shell ${compact ? 'compact' : ''}`} ref={shell}>
     <a className="skip-link" href="#main-content" onClick={event => { event.preventDefault(); main.current?.focus(); }}>Skip to lesson</a>
     <aside id="workspace-menu" className={`sidebar ${menu ? 'sidebar-open' : ''}`}>
-      <a aria-label="Prep Atlas home" className="brand" href="#atlas" onClick={event => go(event, { page: 'atlas', id: '' })}><BrandMark /><div><strong>Prep Atlas</strong><small>Interview workspace</small></div></a>
+      <a aria-label="Prep Atlas home" className="brand" href="#atlas" onClick={event => go(event, { page: 'atlas', id: '' })}><BrandMark /><small>Interview workspace</small></a>
       {compact && <nav className="icon-rail" aria-label="Workspace shortcuts">
         {railItems.map(({ label, icon: Icon, links, page }) => <div className="rail-group" key={label}
           onMouseEnter={() => setFlyout(label)} onMouseLeave={() => setFlyout(null)}
@@ -410,7 +415,7 @@ export default function Workspace({ chapters }: { chapters: Chapter[] }) {
     <div className="main-column">
       <header className="top-bar">
         <div className="breadcrumbs">
-          <button className="icon-button rail-toggle" aria-label={compact ? 'Expand sidebar' : 'Collapse sidebar'} title={compact ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'} aria-keyshortcuts="Control+B" aria-controls="workspace-menu" aria-expanded={!compact} onClick={() => { setCompact(value => !value); setFlyout(null); }}><PanelLeft size={18} /></button>
+          <button className="icon-button rail-toggle" aria-label={compact ? 'Expand sidebar' : 'Collapse sidebar'} title={compact ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'} aria-keyshortcuts="Control+B" aria-controls="workspace-menu" aria-expanded={!compact} onClick={() => { setCompact(value => !value); setFlyout(null); }}><PanelLeft size={15} /></button>
           <button className="icon-button menu-toggle"  aria-label={menu ? 'Close navigation' : 'Open navigation'} aria-expanded={menu} aria-controls="workspace-menu" onClick={() => setMenu(!menu)}>{menu ? <X size={22} /> : <Menu size={22} />}</button>
           <a href="#atlas" className="crumb-home" onClick={event => go(event, { page: 'atlas', id: '' })}><Compass size={17} aria-hidden="true" /><span>Workspace</span></a>
           <ChevronRight size={14} className="crumb-arrow" aria-hidden="true" />
