@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useIconMotion } from './icon-motion';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Braces, Check, ChevronDown, ChevronRight, CircleHelp, CodeXml, Command, Compass, FlaskConical, Gauge, GraduationCap, Layers3, ListTree, Map, Menu, Search, X } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Braces, Check, ChevronDown, ChevronRight, CircleHelp, CodeXml, Command, Compass, FlaskConical, Gauge, GraduationCap, Layers3, ListTree, Map, Menu, PanelLeft, Search, X } from 'lucide-react';
 import { tracks, type Chapter, type Lesson, type TrackId } from '../content/curriculum';
 import { lessons } from '../content/lessons';
 import { TopicRuler } from './topic-ruler';
@@ -37,7 +37,7 @@ function href({ page, id }: View) {
 }
 
 function BrandMark() {
-  return <span className="brand-mark" aria-hidden="true"><Layers3 size={23} strokeWidth={2.35} /></span>;
+  return <img src="/brand/mark.png" width="38" alt="" />;
 }
 
 function ScopeArtwork() {
@@ -289,6 +289,8 @@ export default function Workspace({ chapters }: { chapters: Chapter[] }) {
   const [study, setStudy] = useState<Study>(initialStudy);
   const [search, setSearch] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [compact, setCompact] = useState(false);
+  const [flyout, setFlyout] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const main = useRef<HTMLElement>(null);
   const shell = useRef<HTMLDivElement>(null);
@@ -297,6 +299,7 @@ export default function Workspace({ chapters }: { chapters: Chapter[] }) {
   useEffect(() => {
     setView(readView());
     try {
+      setCompact(localStorage.getItem('prep-atlas:compact') === 'true');
       const stored: Partial<Study> = JSON.parse(window.localStorage.getItem(storageKey) ?? '{}');
       setStudy({
         complete: Array.isArray(stored.complete) ? stored.complete.filter(id => lessons.some(lesson => lesson.id === id)) : [],
@@ -311,7 +314,14 @@ export default function Workspace({ chapters }: { chapters: Chapter[] }) {
         event.preventDefault();
         setSearch(value => !value);
       }
-      if (event.key === 'Escape') setMenu(false);
+      if (event.ctrlKey && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'b' && !event.repeat &&
+          !(event.target instanceof HTMLElement && (event.target.isContentEditable || event.target.closest('input,textarea,select')))) {
+        event.preventDefault();
+        setFlyout(null);
+        if (window.matchMedia('(min-width: 901px)').matches) setCompact(value => !value);
+        else setMenu(value => !value);
+      }
+      if (event.key === 'Escape') { setMenu(false); setFlyout(null); }
     };
     window.addEventListener('hashchange', sync);
     window.addEventListener('keydown', shortcut);
@@ -330,7 +340,12 @@ export default function Workspace({ chapters }: { chapters: Chapter[] }) {
     if (ready && view.page === 'lesson') setStudy(previous => previous.visited === view.id ? previous : { ...previous, visited: view.id });
   }, [ready, view]);
 
+  useEffect(() => {
+    if (ready) try { localStorage.setItem('prep-atlas:compact', String(compact)); } catch { /* Session only. */ }
+  }, [compact, ready]);
+
   function navigate(next: View) {
+    setFlyout(null);
     setView(next);
     setSearch(false);
     setMenu(false);
@@ -354,11 +369,28 @@ export default function Workspace({ chapters }: { chapters: Chapter[] }) {
   const title = view.page === 'atlas' ? 'Topic atlas' : view.page === 'roadmap' ? 'Study roadmap' : view.page === 'blueprint' ? 'Preparation blueprint' : track?.title ?? 'Visual lab';
   const percent = Math.round(study.complete.length / lessons.length * 100);
 
-  return <div className="app-shell" ref={shell}>
+  const railItems = [
+    { label: 'Visual lab', icon: FlaskConical, page: 'lesson', links: lessons.map(item => ({ label: item.title, page: 'lesson', id: item.id } as const)) },
+    { label: 'Topic atlas', icon: Map, page: 'atlas', links: [{ label: 'All tracks', page: 'atlas', id: '' } as const, ...tracks.map(item => ({ label: item.title, page: 'track', id: item.id } as const))] },
+    { label: 'Study roadmap', icon: ListTree, page: 'roadmap', links: [{ label: 'Open study roadmap', page: 'roadmap', id: '' } as const] },
+    { label: 'Blueprint', icon: BookOpen, page: 'blueprint', links: chapters.filter(c => !c.number.includes('.')).map(c => ({ label: c.title, page: 'blueprint', id: c.id } as const)) },
+  ];
+  return <div className={`app-shell ${compact ? 'compact' : ''}`} ref={shell}>
     <a className="skip-link" href="#main-content" onClick={event => { event.preventDefault(); main.current?.focus(); }}>Skip to lesson</a>
     <aside id="workspace-menu" className={`sidebar ${menu ? 'sidebar-open' : ''}`}>
-      <a className="brand" href="#atlas" onClick={event => go(event, { page: 'atlas', id: '' })}><BrandMark /><div><strong>Prep Atlas</strong><small>Interview workspace</small></div></a>
-      <nav className="sidebar-nav" aria-label="Study workspace">
+      <a aria-label="Prep Atlas home" className="brand" href="#atlas" onClick={event => go(event, { page: 'atlas', id: '' })}><BrandMark /><div><strong>Prep Atlas</strong><small>Interview workspace</small></div></a>
+      {compact && <nav className="icon-rail" aria-label="Workspace shortcuts">
+        {railItems.map(({ label, icon: Icon, links, page }) => <div className="rail-group" key={label}
+          onMouseEnter={() => setFlyout(label)} onMouseLeave={() => setFlyout(null)}
+          onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFlyout(null); }}
+          onKeyDown={event => { if (event.key === 'Escape') { event.currentTarget.querySelector('button')?.focus(); setFlyout(null); } }}>
+          <button type="button" aria-label={label} aria-expanded={flyout === label} className={view.page === page || (page === 'atlas' && view.page === 'track') ? 'current' : ''}
+            onFocus={() => setFlyout(label)} onClick={() => setFlyout(label)}><Icon size={19} /></button>
+          {flyout === label && <div className="rail-pop"><strong>{label}</strong><div>{links.map(link =>
+            <a key={link.page + link.id} href={href(link)} onClick={event => go(event, link)}>{link.label}</a>)}</div></div>}
+        </div>)}
+      </nav>}
+      <nav className="sidebar-nav"  aria-label="Study workspace">
         <div className="sidebar-section">
           <p>WORKSPACE</p>
           <a href={`#lesson/${study.visited}`} className={`side-item ${view.page === 'lesson' ? 'active' : ''}`} aria-current={view.page === 'lesson' ? 'page' : undefined} onClick={event => go(event, { page: 'lesson', id: study.visited })}><FlaskConical size={17} /> Visual lab</a>
@@ -378,7 +410,8 @@ export default function Workspace({ chapters }: { chapters: Chapter[] }) {
     <div className="main-column">
       <header className="top-bar">
         <div className="breadcrumbs">
-          <button className="icon-button menu-toggle" aria-label={menu ? 'Close navigation' : 'Open navigation'} aria-expanded={menu} aria-controls="workspace-menu" onClick={() => setMenu(!menu)}>{menu ? <X size={22} /> : <Menu size={22} />}</button>
+          <button className="icon-button rail-toggle" aria-label={compact ? 'Expand sidebar' : 'Collapse sidebar'} title={compact ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'} aria-keyshortcuts="Control+B" aria-controls="workspace-menu" aria-expanded={!compact} onClick={() => { setCompact(value => !value); setFlyout(null); }}><PanelLeft size={18} /></button>
+          <button className="icon-button menu-toggle"  aria-label={menu ? 'Close navigation' : 'Open navigation'} aria-expanded={menu} aria-controls="workspace-menu" onClick={() => setMenu(!menu)}>{menu ? <X size={22} /> : <Menu size={22} />}</button>
           <a href="#atlas" className="crumb-home" onClick={event => go(event, { page: 'atlas', id: '' })}><Compass size={17} aria-hidden="true" /><span>Workspace</span></a>
           <ChevronRight size={14} className="crumb-arrow" aria-hidden="true" />
           {lesson && track ? <><a className="crumb-track" href={`#track/${track.id}`} onClick={event => go(event, { page: 'track', id: track.id })}>{track.title}</a><ChevronRight size={14} className="crumb-arrow" aria-hidden="true" /><b>{lesson.title}</b></> : <b>{title}</b>}
