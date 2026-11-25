@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+
+# Local delivery and hosting metadata
+/Prep-Atlas.zip
+/.openai/
+.env*
