@@ -17,7 +17,7 @@ Open [localhost:3000](http://localhost:3000). Lessons and fonts ship with the ap
 
 ## What you can study
 
-The 43 labs cover eight tracks, with code walkthroughs, comparisons, quizzes, and exercises.
+The 61 labs cover eight tracks. Add a notebook to a cart, switch chat rooms, roll back a transfer, or reorder a list while editing a row. Practice includes predicting results and comparing them with the worked examples.
 
 | Track | Example |
 | --- | --- |

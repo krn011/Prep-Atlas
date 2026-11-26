@@ -2,6 +2,7 @@ import type { Lesson } from './curriculum';
 import { scopeLesson } from './scope';
 import { algorithmLessons } from './algorithms';
 import { appliedLessons } from './applied';
+import { experimentLessons } from './experiments';
 import { extensions } from './extended';
 
 import { example, frame, node } from './fixtures';
@@ -126,4 +127,4 @@ const fundamentals: Lesson[] = [
   },
 ];
 
-export const lessons = [scopeLesson, ...fundamentals, ...appliedLessons, ...extensions, ...algorithmLessons];
+export const lessons = [scopeLesson, ...fundamentals, ...appliedLessons, ...extensions, ...algorithmLessons, ...experimentLessons];

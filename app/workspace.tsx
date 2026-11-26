@@ -7,6 +7,8 @@ import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Braces, Check
 import { tracks, type Chapter, type Lesson, type TrackId } from '../content/curriculum';
 import { lessons } from '../content/lessons';
 import { TopicRuler } from './topic-ruler';
+import { LiveExample } from './live-examples';
+import { experimentCases } from '../content/experiments';
 import { Blueprint } from './blueprint';
 import { Compare, Lab, Practice } from './lab';
 import { GrowthChart, JoinPlayground, RenderingGrid } from './visuals';
@@ -111,7 +113,8 @@ function LessonContent({ lesson, isComplete, onComplete, onNavigate }: {
       <button type="button" aria-pressed={isComplete} className={`button completion ${isComplete ? 'is-complete' : ''}`} onClick={onComplete}><Check size={16} aria-hidden="true" />{isComplete ? 'Completed' : 'Mark complete'}</button>
     </nav>
     <div ref={panel} className="lesson-panel" tabIndex={-1}>
-      <div hidden={tab !== 'visual'}><Lab lesson={lesson} />
+      <div hidden={tab !== 'visual'}><LiveExample id={lesson.id} />
+        {!experimentCases.has(lesson.id) && <Lab lesson={lesson} />}
         {lesson.id === 'joins' && <JoinPlayground />}
         {lesson.id === 'next-cache' && <RenderingGrid />}
         {lesson.id === 'complexity' && <GrowthChart />}

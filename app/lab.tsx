@@ -1,5 +1,7 @@
 'use client';
 
+import { HandsOnPractice } from './live-examples';
+
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ArrowDown, ArrowRight, ChevronLeft, ChevronRight, CircleAlert, CircleCheck, Code2, Crosshair, Layers3, Pause, Play, RotateCcw, Terminal } from 'lucide-react';
@@ -224,6 +226,28 @@ export function Compare({ lesson }: { lesson: Lesson }) {
   </section>;
 }
 
+
+function Prediction({ lesson }: { lesson: Lesson }) {
+  const [which, setWhich] = useState(0);
+  const [prediction, setPrediction] = useState('');
+  const [revealed, setRevealed] = useState(false);
+  const item = lesson.compare[which];
+  function changeCase(index: number) {
+    setWhich(index);
+    setPrediction('');
+    setRevealed(false);
+  }
+  return <div className="exercise sample-body prediction">
+    <h3>Predict the result</h3>
+    <div className="sample-actions">{lesson.compare.map((example, i) =>
+      <button key={example.label} className="button button-light" aria-pressed={which === i} onClick={() => changeCase(i)}>{example.label}</button>)}</div>
+    <pre><code>{item.code}</code></pre>
+    <label>What do you expect to happen?<textarea value={prediction} rows={2} onChange={event => { setPrediction(event.target.value); setRevealed(false); }} /></label>
+    <button className="button button-light" disabled={!prediction.trim()} onClick={() => setRevealed(true)}>Compare my prediction</button>
+    {revealed && <p className="solution" role="status"><b>Expected result</b><br/>{item.result}</p>}
+  </div>;
+}
+
 export function Practice({ lesson }: { lesson: Lesson }) {
   const [choice, setChoice] = useState<number>();
   const [solution, setSolution] = useState(false);
@@ -240,6 +264,8 @@ export function Practice({ lesson }: { lesson: Lesson }) {
       </button>)}
     </fieldset>
     {hasAnswer && <p className={`feedback ${correct ? 'correct' : 'incorrect'}`} role="status">{correct ? lesson.question.why : 'Try again. Think about what the example actually does.'}</p>}
+    <HandsOnPractice id={lesson.id} />
+    <Prediction lesson={lesson} />
     <div className="exercise"><h3>Try it yourself</h3><p>{lesson.exercise}</p>
       <button className="button button-light" type="button" aria-expanded={solution} onClick={() => setSolution(!solution)}>{solution ? 'Hide solution' : 'Reveal solution'}</button>
       {solution && <p className="solution">{lesson.solution}</p>}
