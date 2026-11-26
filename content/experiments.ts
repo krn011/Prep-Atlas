@@ -1,3 +1,4 @@
+import { experimentNotes } from './experiment-notes';
 import type { Lesson, TrackId } from './curriculum';
 
 type Trial = [label: string, code: string, before: string[], after: string[], reason: string];
@@ -78,7 +79,7 @@ const experiments: Experiment[] = [
 ];
 export const experimentCases = new Map(experiments.map(e => [e[0], [e[4], e[5]]]));
 export const experimentLessons: Lesson[] = experiments.map(([id,track,title,task,a,b,prompt,options,answer,why]) => ({
-  id, track, title, summary: task, detail: a[4]+' '+b[4], use: task, mistake: why,
+  id, track, title, summary: task, ...experimentNotes[id], mistake: why,
   code: a[1]+'\n'+b[1], file: 'Two cases', language: 'Example',
   frames: [a,b].map(([label,,before,after,reason], i) => ({title: label, note: reason, line: i+1, nodes: [{label:'Input',value:before.join(' · ')},{label:'Result',value:after.join(' · ')}]})),
   compare: [{label:a[0],code:a[1],result:a[3].join(' · ')},{label:b[0],code:b[1],result:b[3].join(' · ')}],

@@ -5,15 +5,18 @@ import gsap from 'gsap';
 import { useIconMotion } from './icon-motion';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Braces, Check, ChevronDown, ChevronRight, CircleHelp, CodeXml, Command, Compass, FlaskConical, Gauge, GraduationCap, Layers3, ListTree, Map, Menu, PanelLeft, Search, X } from 'lucide-react';
 import { tracks, type Chapter, type Lesson, type TrackId } from '../content/curriculum';
+import { workedExamples } from '../content/worked-examples';
 import { lessons } from '../content/lessons';
 import { TopicRuler } from './topic-ruler';
 import { LiveExample } from './live-examples';
 import { experimentCases } from '../content/experiments';
+import { Interview } from './interview';
+import { seniorCases } from '../content/senior-cases';
 import { Blueprint } from './blueprint';
 import { Compare, Lab, Practice } from './lab';
 import { GrowthChart, JoinPlayground, RenderingGrid } from './visuals';
 
-type View = { page: 'lesson' | 'track' | 'atlas' | 'roadmap' | 'blueprint'; id: string };
+type View = { page: 'lesson' | 'track' | 'atlas' | 'roadmap' | 'blueprint' | 'interview'; id: string };
 type Study = { complete: string[]; visited: string; roadmap: string[] };
 type Tab = 'visual' | 'compare' | 'practice';
 
@@ -28,7 +31,7 @@ const tabs: { id: Tab; title: string; icon: typeof Layers3 }[] = [
 
 function readView(): View {
   const [page, id = ''] = window.location.hash.slice(1).split('/');
-  if (page === 'atlas' || page === 'roadmap' || page === 'blueprint') return { page, id };
+  if (page === 'interview' || page === 'atlas' || page === 'roadmap' || page === 'blueprint') return { page, id };
   if (page === 'track' && tracks.some(track => track.id === id)) return { page, id };
   if (page === 'lesson' && lessons.some(lesson => lesson.id === id)) return { page, id };
   return initialView;
@@ -120,15 +123,22 @@ function LessonContent({ lesson, isComplete, onComplete, onNavigate }: {
         {lesson.id === 'complexity' && <GrowthChart />}
       </div>
       {tab === 'compare' && <Compare lesson={lesson} />}
-      {tab === 'practice' && <Practice lesson={lesson} />}
+      {tab === 'practice' && <><Practice lesson={lesson} />{seniorCases.filter(item => item.lesson === lesson.id).map(item => <button className="button button-light" key={item.id} onClick={() => onNavigate({ page: 'interview', id: item.id })}>Senior challenge · {item.title} →</button>)}</>}
     </div>
-    <div className="under-lesson">
-      <section className="note-card">
-        <BookOpen size={21} aria-hidden="true" /><div><h2>The idea in plain words</h2><p>{lesson.detail}</p>
-          {lesson.source && <a href={lesson.source[1]} target="_blank" rel="noreferrer">{lesson.source[0]} <ArrowUpRight size={13} aria-hidden="true" /></a>}</div>
-      </section>
-      <section className="note-card use-card"><Compass size={21} aria-hidden="true" /><div><h2>Where you’ll use this</h2><p>{lesson.use}</p></div></section>
-    </div>
+    <section className="lesson-reading" aria-label={lesson.title + ' study notes'}>
+      <div className="reading-main">
+        <h2>{lesson.title}</h2>
+        <p>{lesson.detail}</p>
+        {workedExamples[lesson.id] && <div className="reading-example">
+          <h3>{workedExamples[lesson.id][0]}</h3><p>{workedExamples[lesson.id][1]}</p>
+        </div>}
+      </div>
+      <aside className="reading-aside">
+        <h3>Where you’ll use this</h3><p>{lesson.use}</p>
+        {lesson.source && <a href={lesson.source[1]} target="_blank" rel="noreferrer">{lesson.source[0]} <ArrowUpRight size={14} aria-hidden="true" /></a>}
+        {lesson.id === 'debounce' && <a href="https://www.w3schools.com/js/js_timers.asp" target="_blank" rel="noreferrer">W3Schools · JavaScript timers <ArrowUpRight size={14} aria-hidden="true" /></a>}
+      </aside>
+    </section>
     <div className="lesson-footer">
       <button className="text-button" data-icon-motion="back" onClick={() => onNavigate({ page: 'track', id: lesson.track })}><ArrowLeft size={17} /> All lessons in this track</button>
       {next && <button className="button button-dark" data-icon-motion="forward" onClick={() => onNavigate({ page: 'lesson', id: next.id })}>{next.title} <ArrowRight size={16} /></button>}
@@ -256,6 +266,7 @@ function SearchDialog({ open, close, navigate, chapters }: { open: boolean; clos
   const tokens = clean.split(/\s+/);
   const matches = (haystack: string) => tokens.every(token => haystack.toLowerCase().includes(token));
   const results = [
+    ...(clean ? seniorCases.filter(item => matches('senior interview mock ' + item.title + ' ' + item.topic + ' ' + item.design)).map(item => ({ title: item.title, caption: 'Senior interview case', target: { page: 'interview', id: item.id } as View })) : []),
     ...lessons.filter(item => matches(item.title + ' ' + item.summary + ' ' + item.track)).slice(0, clean ? 8 : 5).map(item => ({ title: item.title, caption: tracks.find(track => track.id === item.track)?.title ?? '', target: { page: 'lesson', id: item.id } as View })),
     ...(clean ? chapters.filter(item => matches(item.title + ' ' + item.markdown)).slice(0, 6).map(item => ({ title: item.title, caption: 'Blueprint · ' + item.number, target: { page: 'blueprint', id: item.id } as View })) : []),
   ];
@@ -374,12 +385,13 @@ export default function Workspace({ chapters }: { chapters: Chapter[] }) {
 
   const lesson = view.page === 'lesson' ? lessons.find(item => item.id === view.id) : undefined;
   const track = tracks.find(item => item.id === (lesson?.track ?? view.id));
-  const title = view.page === 'atlas' ? 'Topic atlas' : view.page === 'roadmap' ? 'Study roadmap' : view.page === 'blueprint' ? 'Preparation blueprint' : track?.title ?? 'Visual lab';
+  const title = view.page === 'interview' ? 'Senior interview studio' : view.page === 'atlas' ? 'Topic atlas' : view.page === 'roadmap' ? 'Study roadmap' : view.page === 'blueprint' ? 'Preparation blueprint' : track?.title ?? 'Visual lab';
   const percent = Math.round(study.complete.length / lessons.length * 100);
 
   const railItems = [
     { label: 'Visual lab', icon: FlaskConical, page: 'lesson', links: lessons.map(item => ({ label: item.title, page: 'lesson', id: item.id } as const)) },
     { label: 'Topic atlas', icon: Map, page: 'atlas', links: [{ label: 'All tracks', page: 'atlas', id: '' } as const, ...tracks.map(item => ({ label: item.title, page: 'track', id: item.id } as const))] },
+    { label: 'Senior interview studio', icon: GraduationCap, page: 'interview', links: [{ label: 'All cases and revision', page: 'interview', id: '' } as const, ...seniorCases.map(item => ({ label: item.title, page: 'interview', id: item.id } as const))] },
     { label: 'Study roadmap', icon: ListTree, page: 'roadmap', links: [{ label: 'Open study roadmap', page: 'roadmap', id: '' } as const] },
     { label: 'Blueprint', icon: BookOpen, page: 'blueprint', links: chapters.filter(c => !c.number.includes('.')).map(c => ({ label: c.title, page: 'blueprint', id: c.id } as const)) },
   ];
@@ -403,6 +415,7 @@ export default function Workspace({ chapters }: { chapters: Chapter[] }) {
           <p>WORKSPACE</p>
           <a href={`#lesson/${study.visited}`} className={`side-item ${view.page === 'lesson' ? 'active' : ''}`} aria-current={view.page === 'lesson' ? 'page' : undefined} onClick={event => go(event, { page: 'lesson', id: study.visited })}><FlaskConical size={17} /> Visual lab</a>
           <a href="#atlas" className={`side-item ${view.page === 'atlas' ? 'active' : ''}`} aria-current={view.page === 'atlas' ? 'page' : undefined} onClick={event => go(event, { page: 'atlas', id: '' })}><Map size={17} /> Topic atlas</a>
+          <a href="#interview" className={`side-item ${view.page === 'interview' ? 'active' : ''}`} aria-current={view.page === 'interview' ? 'page' : undefined} onClick={event => go(event, { page: 'interview', id: '' })}><GraduationCap size={17} /> Senior interview studio</a>
           <a href="#roadmap" className={`side-item ${view.page === 'roadmap' ? 'active' : ''}`} aria-current={view.page === 'roadmap' ? 'page' : undefined} onClick={event => go(event, { page: 'roadmap', id: '' })}><ListTree size={17} /> Study roadmap</a>
           <a href="#blueprint" className={`side-item ${view.page === 'blueprint' ? 'active' : ''}`} aria-current={view.page === 'blueprint' ? 'page' : undefined} onClick={event => go(event, { page: 'blueprint', id: '' })}><BookOpen size={17} /> Blueprint</a>
         </div>
@@ -430,6 +443,7 @@ export default function Workspace({ chapters }: { chapters: Chapter[] }) {
         <div key={href(view)} className="view-content">
         {lesson && <LessonContent key={lesson.id} lesson={lesson} isComplete={study.complete.includes(lesson.id)} onComplete={() => toggle('complete', lesson.id)} onNavigate={navigate} />}
         {(view.page === 'atlas' || view.page === 'track') && <TrackCatalog view={view} complete={study.complete} onNavigate={navigate} />}
+        {view.page === 'interview' && <Interview id={view.id} open={id => navigate({ page: 'interview', id })} />}
         {view.page === 'roadmap' && <Roadmap chapters={chapters} done={study.roadmap} toggle={id => toggle('roadmap', id)} />}
         {view.page === 'blueprint' && <BlueprintView key={view.id} chapters={chapters} initialId={view.id} />}
         </div>
